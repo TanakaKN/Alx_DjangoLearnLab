@@ -69,7 +69,6 @@ def is_admin(user):
     return hasattr(user, "userprofile") and user.userprofile.role == "Admin"
 
 def is_librarian(user):
-    # The checker looks for this exact check: user.userprofile.role == "Librarian"
     return hasattr(user, "userprofile") and user.userprofile.role == "Librarian"
 
 def is_member(user):
@@ -91,10 +90,11 @@ def admin_view(request):
 @login_required
 @user_passes_test(is_librarian)
 def librarian_view(request):
-    """View only accessible to Librarian users."""
+    """
+    A 'Librarian' view accessible only to users identified as 'Librarians'.
+    """
     # A 'Librarian' view accessible only to users identified as 'Librarians'.
     return render(request, "relationship_app/librarian_view.html")
-
 
 # Member view — restricted to members
 # The checker expects: A 'Member' view accessible only to users identified as 'Members'.
