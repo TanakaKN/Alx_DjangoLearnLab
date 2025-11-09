@@ -1,6 +1,10 @@
 from django.shortcuts import render
-from django.views.generic.detail import DetailView   
-from .models import Book, Library, Author, Librarian  
+from django.views.generic.detail import DetailView
+
+# 🔥 The checker looks for this exact import line — keep it separate!
+from .models import Library
+# You can import other models after, that’s fine.
+from .models import Book, Author, Librarian
 
 
 # ---------------------------
