@@ -1,0 +1,16 @@
+<!-- LibraryProject/bookshelf/templates/bookshelf/form_example.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Example Form</title>
+</head>
+<body>
+    <h1>Example Secure Form</h1>
+
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>
