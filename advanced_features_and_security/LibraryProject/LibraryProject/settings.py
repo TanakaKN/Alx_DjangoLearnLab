@@ -41,6 +41,12 @@ INSTALLED_APPS = [
     "relationship_app.apps.RelationshipAppConfig",
 ]
 
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = "DENY"
+SECURE_CONTENT_TYPE_NOSNIFF = True
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+
 AUTH_USER_MODEL = "bookshelf.CustomUser"
 
 MIDDLEWARE = [
