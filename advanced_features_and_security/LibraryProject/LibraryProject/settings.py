@@ -41,11 +41,19 @@ INSTALLED_APPS = [
     "relationship_app.apps.RelationshipAppConfig",
 ]
 
-SECURE_BROWSER_XSS_FILTER = True
-X_FRAME_OPTIONS = "DENY"
+# Prevent content-type sniffing
 SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# Enable browser XSS protection
+SECURE_BROWSER_XSS_FILTER = True
+
+# Prevent the site from being embedded in iframes
+X_FRAME_OPTIONS = "DENY"
+
+# Secure cookies
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
+
 
 AUTH_USER_MODEL = "bookshelf.CustomUser"
 
