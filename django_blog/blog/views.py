@@ -1,29 +1,46 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, LogoutView
 
-from .models import Post
-from .forms import RegisterForm
+from .forms import UserRegistrationForm, UserProfileForm
 
+
+# Home page (already had something like this)
 def home(request):
     return render(request, "blog/home.html")
 
-def post_list(request):
-    posts = Post.objects.all().order_by("-published_date")
-    return render(request, "blog/posts.html", {"posts": posts})
+
+class UserLoginView(LoginView):
+    template_name = "blog/login.html"
+
+
+class UserLogoutView(LogoutView):
+    template_name = "blog/logout.html"
+
 
 def register(request):
     if request.method == "POST":
-        form = RegisterForm(request.POST)
+        form = UserRegistrationForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return redirect("home")
+            user = form.save()       # creates the user in DB
+            login(request, user)     # automatically log in
+            return redirect("home")  # go to home after register
     else:
-        form = RegisterForm()
+        form = UserRegistrationForm()
+
     return render(request, "blog/register.html", {"form": form})
 
-class BlogLoginView(LoginView):
-    template_name = "blog/login.html"
-class BlogLogoutView(LogoutView):
-    next_page = "home"
+
+@login_required
+def profile(request):
+    if request.method == "POST":
+        form = UserProfileForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            return redirect("profile")    # reload profile page
+    else:
+        form = UserProfileForm(instance=request.user)
+
+    return render(request, "blog/profile.html", {"form": form})
+
