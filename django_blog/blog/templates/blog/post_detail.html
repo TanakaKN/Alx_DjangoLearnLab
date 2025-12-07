@@ -3,20 +3,66 @@
 {% block title %}{{ post.title }} - Django Blog{% endblock %}
 
 {% block content %}
+  <!-- Post details -->
   <article>
     <h1>{{ post.title }}</h1>
-    <small>
-      By {{ post.author.username }} • {{ post.published_date }}
-    </small>
+    <p>
+      <strong>By:</strong> {{ post.author.username }}
+      • <strong>Published:</strong> {{ post.published_date|date:"Y-m-d H:i" }}
+    </p>
+    <hr>
     <p>{{ post.content }}</p>
+
+    {% if user.is_authenticated and user == post.author %}
+      <p>
+        <a href="{% url 'post-update' post.pk %}">Edit Post</a> |
+        <a href="{% url 'post-delete' post.pk %}">Delete Post</a>
+      </p>
+    {% endif %}
   </article>
 
-  {% if user.is_authenticated and user == post.author %}
-    <p>
-      <a href="{% url 'post-edit' post.pk %}">Edit</a> |
-      <a href="{% url 'post-delete' post.pk %}">Delete</a>
-    </p>
-  {% endif %}
+  <hr>
 
-  <p><a href="{% url 'posts' %}">&larr; Back to all posts</a></p>
+  <!-- Comments section -->
+  <section>
+    <h2>Comments</h2>
+
+    {% for comment in post.comments.all %}
+      <div style="margin-bottom: 1rem; border-bottom: 1px solid #ddd; padding-bottom: 0.5rem;">
+        <p>
+          <strong>{{ comment.author.username }}</strong>
+          • {{ comment.created_at|date:"Y-m-d H:i" }}
+        </p>
+        <p>{{ comment.content }}</p>
+
+        {% if user.is_authenticated and user == comment.author %}
+          <p>
+            <a href="{% url 'comment-update' comment.pk %}">Edit</a> |
+            <a href="{% url 'comment-delete' comment.pk %}">Delete</a>
+          </p>
+        {% endif %}
+      </div>
+    {% empty %}
+      <p>No comments yet.</p>
+    {% endfor %}
+  </section>
+
+  <hr>
+
+  <!-- Add comment form -->
+  <section>
+    {% if user.is_authenticated %}
+      <h3>Add a comment</h3>
+      <form method="post" action="{% url 'comment-create' post.pk %}">
+        {% csrf_token %}
+        {{ comment_form.as_p }}
+        <button type="submit">Post Comment</button>
+      </form>
+    {% else %}
+      <p>
+        <a href="{% url 'login' %}">Log in</a> to add a comment.
+      </p>
+    {% endif %}
+  </section>
+
 {% endblock %}
