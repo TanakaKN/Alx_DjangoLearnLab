@@ -1,0 +1,17 @@
+{% extends "blog/base.html" %}
+
+{% block title %}{{ view.object|default_if_none:"New Post" }} - Django Blog{% endblock %}
+
+{% block content %}
+  <h1>
+    {% if view.object %}Edit Post{% else %}Create New Post{% endif %}
+  </h1>
+
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save</button>
+  </form>
+
+  <p><a href="{% url 'posts' %}">&larr; Back to all posts</a></p>
+{% endblock %}
