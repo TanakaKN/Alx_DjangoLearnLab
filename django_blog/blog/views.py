@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, LogoutView
 
 from .forms import UserRegistrationForm, UserProfileForm
+from .models import Post
 
 
 # Home page (already had something like this)
@@ -13,6 +14,11 @@ def home(request):
 
 class UserLoginView(LoginView):
     template_name = "blog/login.html"
+
+def post_list(request):
+    """Simple page that will list all blog posts."""
+    posts = Post.objects.all()
+    return render(request, 'blog/post_list.html', {'posts': posts})    
 
 
 class UserLogoutView(LogoutView):
@@ -43,4 +49,5 @@ def profile(request):
         form = UserProfileForm(instance=request.user)
 
     return render(request, "blog/profile.html", {"form": form})
+
 
