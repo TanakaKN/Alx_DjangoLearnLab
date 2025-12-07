@@ -12,6 +12,9 @@ urlpatterns = [
     path('post/<int:pk>/delete/', views.PostDeleteView.as_view(), name='post-delete'),
     path("posts/", views.post_list, name="posts"),
 
+    path('tag/<str:tag_name>/', views.posts_by_tag, name='posts-by-tag'),
+    path('search/', views.search_posts, name='search-posts'),
+
 
         # Comments section
     path(

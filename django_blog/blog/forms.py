@@ -17,10 +17,15 @@ class UserProfileForm(forms.ModelForm):
         fields = ["username", "email", "first_name", "last_name"]
 
 class PostForm(forms.ModelForm):
+    # Not stored directly – we will parse it in the view
+    tags = forms.CharField(
+        required=False,
+        help_text="Enter tags separated by commas, e.g.: django, backend, APIs"
+    )
+
     class Meta:
         model = Post
-        # We don’t include author or published_date – those are set automatically
-        fields = ['title', 'content']
+        fields = ['title', 'content', 'tags']   # author & date are set in the view
 
 class CommentForm(forms.ModelForm):
     class Meta:

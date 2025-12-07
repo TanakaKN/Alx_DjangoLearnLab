@@ -45,28 +45,59 @@ class PostDetailView(DetailView):
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post
     form_class = PostForm
-    template_name = 'blog/post_form.html'
+    template_name = 'blog/post_form.html'  # should already exist
 
     def form_valid(self, form):
-        # Set the author to the currently logged-in user
+        # Set the author to the logged-in user
         form.instance.author = self.request.user
-        return super().form_valid(form)
+        # You might be setting published_date somewhere else; if needed,
+        # you can import timezone and set it here.
+        response = super().form_valid(form)
+        # Handle tags after the Post is saved
+        self._save_tags(form)
+        return response
+
+    def _save_tags(self, form):
+        tags_str = form.cleaned_data.get('tags', '')
+        if not tags_str:
+            return
+        tags_names = [t.strip() for t in tags_str.split(',') if t.strip()]
+        for name in tags_names:
+            tag_obj, created = Tag.objects.get_or_create(name=name)
+            self.object.tags.add(tag_obj)
+
 
 class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Post
     form_class = PostForm
     template_name = 'blog/post_form.html'
 
+    def get_initial(self):
+        initial = super().get_initial()
+        # Pre-fill the tags field with current tags
+        initial['tags'] = ', '.join(t.name for t in self.object.tags.all())
+        return initial
+
     def form_valid(self, form):
-        form.instance.author = self.request.user
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        # Clear old tags and set new ones
+        self.object.tags.clear()
+        self._save_tags(form)
+        return response
+
+    def _save_tags(self, form):
+        tags_str = form.cleaned_data.get('tags', '')
+        if not tags_str:
+            return
+        tags_names = [t.strip() for t in tags_str.split(',') if t.strip()]
+        for name in tags_names:
+            tag_obj, created = Tag.objects.get_or_create(name=name)
+            self.object.tags.add(tag_obj)
 
     def test_func(self):
-        """
-        Only allow the author of the post to edit.
-        """
         post = self.get_object()
-        return post.author == self.request.user
+        return self.request.user == post.author
+
 
 class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Post
@@ -79,6 +110,33 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         """
         post = self.get_object()
         return post.author == self.request.user
+    
+def posts_by_tag(request, tag_name):
+    tag = get_object_or_404(Tag, name=tag_name)
+    posts = Post.objects.filter(tags=tag).order_by('-published_date')
+    context = {
+        'tag': tag,
+        'posts': posts,
+    }
+    return render(request, 'blog/tag_posts.html', context)
+
+def search_posts(request):
+    query = request.GET.get('q', '')
+    posts = Post.objects.none()
+
+    if query:
+        posts = Post.objects.filter(
+            Q(title__icontains=query) |
+            Q(content__icontains=query) |
+            Q(tags__name__icontains=query)
+        ).distinct().order_by('-published_date')
+
+    context = {
+        'query': query,
+        'posts': posts,
+    }
+    return render(request, 'blog/search_results.html', context)
+
 
 
 

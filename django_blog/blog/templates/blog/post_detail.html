@@ -3,7 +3,6 @@
 {% block title %}{{ post.title }} - Django Blog{% endblock %}
 
 {% block content %}
-  <!-- Post details -->
   <article>
     <h1>{{ post.title }}</h1>
     <p>
@@ -13,6 +12,18 @@
     <hr>
     <p>{{ post.content }}</p>
 
+    <!-- ✅ TAGS SECTION -->
+    <p><strong>Tags:</strong>
+      {% if post.tags.all %}
+        {% for tag in post.tags.all %}
+          <a href="{% url 'posts-by-tag' tag.name %}">{{ tag.name }}</a>{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+      {% else %}
+        No tags.
+      {% endif %}
+    </p>
+
+    <!-- ✅ EDIT & DELETE BUTTONS -->
     {% if user.is_authenticated and user == post.author %}
       <p>
         <a href="{% url 'post-update' post.pk %}">Edit Post</a> |
@@ -23,7 +34,7 @@
 
   <hr>
 
-  <!-- Comments section -->
+  <!-- ✅ COMMENTS SECTION -->
   <section>
     <h2>Comments</h2>
 
@@ -49,10 +60,10 @@
 
   <hr>
 
-  <!-- Add comment form -->
+  <!-- ✅ ADD COMMENT FORM -->
   <section>
     {% if user.is_authenticated %}
-      <h3>Add a comment</h3>
+      <h3>Add a Comment</h3>
       <form method="post" action="{% url 'comment-create' post.pk %}">
         {% csrf_token %}
         {{ comment_form.as_p }}
@@ -64,5 +75,4 @@
       </p>
     {% endif %}
   </section>
-
 {% endblock %}
