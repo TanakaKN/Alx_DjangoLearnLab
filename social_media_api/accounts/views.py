@@ -76,4 +76,64 @@ class ProfileView(RetrieveUpdateAPIView):
     def get_object(self):
         # Always return the currently authenticated user
         return self.request.user
+    
+
+class FollowUserView(APIView):
+    """
+    POST /follow/<user_id>/
+    - Current authenticated user follows the target user.
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, user_id):
+        try:
+            target_user = User.id.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # you cannot follow yourself
+        if target_user == request.user:
+            return Response(
+                {"detail": "You cannot follow yourself."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # add to following list
+        request.user.following.add(target_user)
+
+        return Response(
+            {"detail": f"You are now following {target_user.username}."},
+            status=status.HTTP_200_OK,
+        )
+
+
+class UnfollowUserView(APIView):
+    """
+    POST /unfollow/<user_id>/
+    - Current authenticated user unfollows the target user.
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, user_id):
+        try:
+            target_user = User.id.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if target_user == request.user:
+            return Response(
+                {"detail": "You cannot unfollow yourself."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # remove from following list (no error if not already following)
+        request.user.following.remove(target_user)
+
+        return Response(
+            {"detail": f"You have unfollowed {target_user.username}."},
+            status=status.HTTP_200_OK,
+        )
+
 

@@ -1,7 +1,7 @@
 from rest_framework import viewsets, permissions, filters
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
-
+from rest_framework.generics import ListAPIView
 from .models import Post, Comment
 from .serializers import PostSerializer, CommentSerializer
 from .permissions import IsOwnerOrReadOnly
@@ -68,3 +68,21 @@ class CommentViewSet(viewsets.ModelViewSet):
         When a comment is created, set the author to the current user.
         """
         serializer.save(author=self.request.user)
+
+class FeedView(ListAPIView):
+    """
+    GET /feed/
+    - Returns posts from users the current user is following,
+      ordered by newest first, with pagination.
+    """
+
+    serializer_class = PostSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = DefaultPagination
+
+    def get_queryset(self):
+        user = self.request.user
+        # all users that this user follows
+        following_users = user.following.all()
+        # posts whose author is in that set
+        return Post.objects.filter(author__in=following_users).order_by("-created_at")
