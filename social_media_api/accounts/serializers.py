@@ -1,12 +1,12 @@
+from django.contrib.auth import authenticate, get_user_model
 from rest_framework import serializers
-from django.contrib.auth import authenticate
-from .models import User
+from rest_framework.authtoken.models import Token  
+
+User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
-    """
-    Basic user serializer for reading user info.
-    """
+    """Basic serializer to show user info."""
 
     class Meta:
         model = User
@@ -14,10 +14,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class RegisterSerializer(serializers.ModelSerializer):
-    """
-    Handles user registration.
-    We only ask for username, email, and password.
-    """
+    """Handles user registration and token creation."""
 
     password = serializers.CharField(write_only=True)
 
@@ -26,19 +23,19 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = ["username", "email", "password"]
 
     def create(self, validated_data):
-        # Use Django's built-in create_user to handle hashing password
-        user = User.objects.create_user(
+        
+        user = get_user_model().objects.create_user(
             username=validated_data["username"],
             email=validated_data.get("email", ""),
             password=validated_data["password"],
         )
+        
+        Token.objects.create(user=user)
         return user
 
 
 class LoginSerializer(serializers.Serializer):
-    """
-    Simple login serializer that validates username + password.
-    """
+    """Validates login credentials."""
 
     username = serializers.CharField()
     password = serializers.CharField(write_only=True)
