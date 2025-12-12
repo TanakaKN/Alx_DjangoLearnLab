@@ -4,7 +4,7 @@ from taggit.forms import TagWidget
 from django.shortcuts import render, get_object_or_404
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from taggit.models import Tag   # 👈 NEW
+from taggit.models import Tag   
 from .models import Post, Comment
 from .forms import PostForm, CommentForm
 
@@ -13,12 +13,10 @@ class PostForm(forms.ModelForm):
     class Meta:
         model = Post
         fields = ['title', 'content', 'tags']
-
-        # The checker is looking for this "widgets" dict
+        
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'content': forms.Textarea(attrs={'class': 'form-control'}),
-            # And specifically for TagWidget()
             'tags': TagWidget(),
         }
 
