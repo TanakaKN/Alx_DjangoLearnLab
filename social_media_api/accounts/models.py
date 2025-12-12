@@ -7,17 +7,16 @@ class User(AbstractUser):
     Custom user model for the Social Media API.
 
     Inherits:
-      - username, password, email, first_name, last_name, etc. from AbstractUser
+      - username, password, email, first_name, last_name, etc.
     Adds:
       - bio: short text about the user
-      - profile_picture: URL to a profile image
+      - profile_picture: an optional image upload
       - followers: users who follow this user (many-to-many self relation)
     """
 
     bio = models.TextField(blank=True)
-    profile_picture = models.URLField(blank=True)
+    profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)
 
-    # Users who follow THIS user
     followers = models.ManyToManyField(
         "self",
         symmetrical=False,
