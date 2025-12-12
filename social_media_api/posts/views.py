@@ -1,4 +1,4 @@
-from rest_framework import viewsets, permissions, filters
+from rest_framework import viewsets, permissions, filters, generics
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
 from rest_framework.generics import ListAPIView
@@ -69,20 +69,17 @@ class CommentViewSet(viewsets.ModelViewSet):
         """
         serializer.save(author=self.request.user)
 
-class FeedView(ListAPIView):
+class FeedView(generics.GenericAPIView):
     """
     GET /feed/
-    - Returns posts from users the current user is following,
-      ordered by newest first, with pagination.
+    Returns posts from users the current user follows.
     """
 
     serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticated]
-    pagination_class = DefaultPagination
 
-    def get_queryset(self):
-        user = self.request.user
-        # all users that this user follows
-        following_users = user.following.all()
-        # posts whose author is in that set
-        return Post.objects.filter(author__in=following_users).order_by("-created_at")
+    def get(self, request):
+        following_users = request.user.following.all()
+        posts = Post.objects.filter(author__in=following_users).order_by("-created_at")
+        serializer = self.get_serializer(posts, many=True)
+        return Response(serializer.data)
