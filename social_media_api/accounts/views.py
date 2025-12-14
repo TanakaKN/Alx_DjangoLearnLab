@@ -4,6 +4,8 @@ from rest_framework.response import Response
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
+from notifications.utils import create_notification
+
 
 from .models import CustomUser, User
 from .serializers import (
@@ -116,3 +118,5 @@ class UnfollowUserView(generics.GenericAPIView):
             {"detail": f"You have unfollowed {target_user.username}."},
             status=status.HTTP_200_OK,
         )
+    
+

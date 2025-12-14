@@ -24,6 +24,7 @@ urlpatterns = [
     path('', include('accounts.urls')),
     path("api/", include("posts.urls")),
     path("api-auth/", include("rest_framework.urls")),
+    path("", include("notifications.urls")),
 ]
 
 if settings.DEBUG:
