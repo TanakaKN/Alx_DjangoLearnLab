@@ -6,6 +6,11 @@ from .models import Post, Comment
 from .serializers import PostSerializer, CommentSerializer
 from .permissions import IsOwnerOrReadOnly
 from notifications.utils import create_notification
+from notifications.models import Notification
+from rest_framework import generics, status
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from .models import Post, Like
 
 class DefaultPagination(PageNumberPagination):
     """
@@ -93,43 +98,47 @@ class FeedView(generics.GenericAPIView):
         serializer = self.get_serializer(posts, many=True)
         return Response(serializer.data)
     
-class PostLikeView(generics.GenericAPIView):
+class LikePostView(generics.GenericAPIView):
     """
-    POST /posts/<pk>/like/
-    - Authenticated user likes the given post.
-    - Prevent multiple likes by the same user.
-    """
+    Allow an authenticated user to like or unlike a post.
 
-    permission_classes = [permissions.IsAuthenticated]
-    queryset = Post.objects.all()
+    - POST /posts/<pk>/like/ will:
+        * create a Like if it doesn't exist (like the post)
+        * delete the Like if it already exists (unlike the post)
+        * create a Notification when the post is liked
+    """
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, pk):
-        post = get_object_or_404(self.get_queryset(), pk=pk)
+        # 1) Safely get the Post or return 404 if it doesn't exist
+        post = generics.get_object_or_404(Post, pk=pk)
 
-        # Check if user already liked this post
-        like_exists = Like.objects.filter(user=request.user, post=post).exists()
-        if like_exists:
-            return Response(
-                {"detail": "You have already liked this post."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # Create like
-        Like.objects.create(user=request.user, post=post)
-
-        # Create notification for the post author (if not the same user)
-        if post.author != request.user:
-            create_notification(
-                recipient=post.author,
-                actor=request.user,
-                verb="liked your post",
-                target=post,
-            )
-
-        return Response(
-            {"detail": "Post liked."},
-            status=status.HTTP_200_OK,
+        # 2) Either get the existing Like or create a new one
+        like, created = Like.objects.get_or_create(
+            user=request.user,
+            post=post
         )
+
+        if created:
+            # 3) If it's a new like, create a notification for the post author
+            Notification.objects.create(
+                recipient=post.author,      # who receives the notification
+                actor=request.user,         # who performed the action
+                verb="liked your post",     # message/description
+                target=post                 # the post that was liked
+            )
+            return Response(
+                {"detail": "Post liked"},
+                status=status.HTTP_201_CREATED
+            )
+
+        # If the like already existed, treat this as "unlike"
+        like.delete()
+        return Response(
+            {"detail": "Like removed"},
+            status=status.HTTP_204_NO_CONTENT
+        )
+
 
 
 class PostUnlikeView(generics.GenericAPIView):
@@ -142,7 +151,7 @@ class PostUnlikeView(generics.GenericAPIView):
     queryset = Post.objects.all()
 
     def post(self, request, pk):
-        post = get_object_or_404(self.get_queryset(), pk=pk)
+        post = generics.get_object_or_404(self.get_queryset(), pk=pk)
 
         like_qs = Like.objects.filter(user=request.user, post=post)
         if not like_qs.exists():
