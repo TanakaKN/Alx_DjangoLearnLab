@@ -98,47 +98,35 @@ class FeedView(generics.GenericAPIView):
         serializer = self.get_serializer(posts, many=True)
         return Response(serializer.data)
     
-class LikePostView(generics.GenericAPIView):
-    """
-    Allow an authenticated user to like or unlike a post.
+from rest_framework import generics, status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
-    - POST /posts/<pk>/like/ will:
-        * create a Like if it doesn't exist (like the post)
-        * delete the Like if it already exists (unlike the post)
-        * create a Notification when the post is liked
-    """
+from .models import Post, Like
+from notifications.models import Notification
+
+
+class LikePostView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk):
-        # 1) Safely get the Post or return 404 if it doesn't exist
+        
         post = generics.get_object_or_404(Post, pk=pk)
-
-        # 2) Either get the existing Like or create a new one
-        like, created = Like.objects.get_or_create(
-            user=request.user,
-            post=post
-        )
+     
+        like, created = Like.objects.get_or_create(user=request.user, post=post)
 
         if created:
-            # 3) If it's a new like, create a notification for the post author
+            # create a notification for the post author
             Notification.objects.create(
-                recipient=post.author,      # who receives the notification
-                actor=request.user,         # who performed the action
-                verb="liked your post",     # message/description
-                target=post                 # the post that was liked
+                recipient=post.author,
+                actor=request.user,
+                verb="liked your post",        
+                target=post,
             )
-            return Response(
-                {"detail": "Post liked"},
-                status=status.HTTP_201_CREATED
-            )
-
-        # If the like already existed, treat this as "unlike"
+            return Response({"detail": "Post liked"}, status=status.HTTP_201_CREATED)
+       
         like.delete()
-        return Response(
-            {"detail": "Like removed"},
-            status=status.HTTP_204_NO_CONTENT
-        )
-
+        return Response({"detail": "Like removed"}, status=status.HTTP_204_NO_CONTENT)
 
 
 class PostUnlikeView(generics.GenericAPIView):
