@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import dj_database_url
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -23,9 +25,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-(@bt99bdkvl00i!jb0&v*@bg3f%6oak4rf&9hj9ogam-5x*h=*'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
+
+# Security settings for production environments
+SECURE_BROWSER_XSS_FILTER = True        # helps mitigate some XSS attacks
+SECURE_CONTENT_TYPE_NOSNIFF = True      # stops browsers guessing file types
+X_FRAME_OPTIONS = "DENY"                # prevents clickjacking via <iframe>
+SECURE_SSL_REDIRECT = False             # set to True when you have HTTPS
 
 
 # Application definition
@@ -59,6 +67,7 @@ AUTH_USER_MODEL = "accounts.User"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', 
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -90,12 +99,20 @@ WSGI_APPLICATION = 'social_media_api.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# ---- Database ----
+# Default: local SQLite
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+
+# If DATABASE_URL is set (on production), override the default.
+DATABASES["default"] = dj_database_url.config(
+    default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+    conn_max_age=600,
+)
 
 
 # Password validation
@@ -131,8 +148,16 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
+# ---- Static files ----
+STATIC_URL = "/static/"
 
-STATIC_URL = 'static/'
+# Where collectstatic will put files in production
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# Extra static files in your project (for dev)
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 
 import os
 
